@@ -98,6 +98,8 @@ class AppLockState extends State<AppLock> with WidgetsBindingObserver {
 
   Completer? _didUnlockCompleter;
 
+  int _lastEnterBgTime = 0;
+
   @visibleForTesting
   OverlayEntry get appOverlayEntry => _appOverlayEntry;
 
@@ -136,6 +138,7 @@ class AppLockState extends State<AppLock> with WidgetsBindingObserver {
     _backgroundLockLatency = widget._initialBackgroundLockLatency;
   }
 
+  /// background to foreground: hidden, inactive, resume
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
@@ -144,14 +147,20 @@ class AppLockState extends State<AppLock> with WidgetsBindingObserver {
       return;
     }
 
-    if (state == AppLifecycleState.hidden && !_locked) {
+    if (state == AppLifecycleState.hidden && !_locked && _lastEnterBgTime == 0) {
       _backgroundLockLatencyTimer?.cancel();
       _backgroundLockLatencyTimer =
           Timer(_backgroundLockLatency, () => showLockScreen());
+      _lastEnterBgTime = DateTime.now().millisecondsSinceEpoch;
     }
 
     if (state == AppLifecycleState.resumed) {
       _backgroundLockLatencyTimer?.cancel();
+      if (_lastEnterBgTime != 0 && DateTime.now().millisecondsSinceEpoch - _lastEnterBgTime >=
+          _backgroundLockLatency.inMilliseconds) {
+        showLockScreen();
+      }
+      _lastEnterBgTime = 0;
     }
 
     setState(() {
