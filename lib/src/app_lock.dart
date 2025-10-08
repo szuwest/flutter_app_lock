@@ -157,7 +157,7 @@ class AppLockState extends State<AppLock> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       _backgroundLockLatencyTimer?.cancel();
       if (_lastEnterBgTime != 0 && DateTime.now().millisecondsSinceEpoch - _lastEnterBgTime >=
-          _backgroundLockLatency.inMilliseconds) {
+          _backgroundLockLatency.inMilliseconds && !_locked) {
         showLockScreen();
       }
       _lastEnterBgTime = 0;
